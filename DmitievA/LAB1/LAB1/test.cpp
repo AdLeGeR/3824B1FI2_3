@@ -4,7 +4,7 @@
 #include "../BitString/tset.cpp"
 
 
-//--------------------------  TBitField  --------------------------
+//  TBitField  
 
 TEST(BitField, CreateAndSizeCheck) {
     TBitField bf(10);
@@ -47,7 +47,7 @@ TEST(BitField, BitwiseOperations) {
     }
 }
 
-//--------------------------  TSet  --------------------------
+// TSet 
 
 TEST(Set, InsertDeleteMembership) {
     TSet s(5);
