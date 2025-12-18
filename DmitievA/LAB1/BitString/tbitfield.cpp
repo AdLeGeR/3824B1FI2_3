@@ -35,7 +35,7 @@ TELEM TBitField::GetMemMask(int n) const {
 }
 
 TBitField::TBitField(int len) {
-    if (len < 0) throw invalid_argument("incorrect length");
+    if (len < 1) throw invalid_argument("incorrect length");
     BitLen = len;
     MemLen = (len + BitsInMem - 1) / BitsInMem; //округление вверх
     pMem = new TELEM[MemLen]();

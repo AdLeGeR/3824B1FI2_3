@@ -7,7 +7,7 @@ using std::ostream;
 
 
 TSet::TSet(int mp) : MaxPower(mp), BitField(mp) {
-    if (mp < 0) throw invalid_argument("Invalid MaxPower");
+    if (mp < 1) throw invalid_argument("Invalid MaxPower");
 }
 
 TSet::TSet(const TSet& s) : MaxPower(s.MaxPower), BitField(s.BitField) {}
@@ -61,10 +61,16 @@ TSet TSet::operator-(int Elem) {
 }
 
 TSet TSet::operator+(const TSet& s) {
+    if (s.MaxPower != MaxPower) {
+        throw std::invalid_argument("This sets belong different universes");
+    }
     return TSet(BitField | s.BitField);
 }
 
 TSet TSet::operator*(const TSet& s) {
+    if (s.MaxPower != MaxPower) {
+        throw std::invalid_argument("This sets belong different universes");
+    }
     return TSet(BitField & s.BitField);
 }
 

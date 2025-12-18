@@ -2,14 +2,24 @@
 #include <stdexcept> 
 #include "../BitString/tbitfield.cpp"
 #include "../BitString/tset.cpp"
+#include <random>
+#include <sstream>
 
+std::random_device dev;
+std::mt19937 rng(dev());
 
+int randnumber(int min, int max) {
+    std::uniform_int_distribution<std::mt19937::result_type> dist(min, max);
+    return dist(rng);
+}
 //  TBitField  
 
 TEST(BitField, CreateAndSizeCheck) {
-    TBitField bf(10);
-    ASSERT_EQ(10, bf.GetLength());
+    int size = randnumber(1, 100);
+    TBitField bf(size);
+    ASSERT_EQ(size, bf.GetLength());
     ASSERT_THROW(TBitField(-5), std::invalid_argument);
+    ASSERT_THROW(TBitField bf(0), std::invalid_argument);
 }
 
 TEST(BitField, BitManipulation) {
@@ -24,6 +34,10 @@ TEST(BitField, BitManipulation) {
     EXPECT_THROW(bf.SetBit(10), std::out_of_range);
     EXPECT_THROW(bf.GetBit(-2), std::out_of_range);
 }
+
+//TEST(BitField, OrOperator) {
+//    int size = 
+//}
 
 TEST(BitField, BitwiseOperations) {
     TBitField x(4), y(4);
@@ -45,6 +59,25 @@ TEST(BitField, BitwiseOperations) {
         if (i != 1)
             EXPECT_TRUE(resNot.GetBit(i));
     }
+}
+
+TEST(BitField, input) {
+    std::istringstream input("101");
+    TBitField bf(3);
+    input >> bf;
+    EXPECT_EQ(bf.GetBit(0), true);
+    EXPECT_EQ(bf.GetBit(1), false);
+    EXPECT_EQ(bf.GetBit(2), true);
+}
+
+TEST(BitField, output) {
+    TBitField bf(3);
+    bf.SetBit(0);
+    bf.ClrBit(1);
+    bf.SetBit(2);
+    std::ostringstream output;
+    output << bf;
+    EXPECT_EQ("101", output.str());
 }
 
 // TSet 
@@ -72,6 +105,15 @@ TEST(Set, UnionAndIntersection) {
     TSet inter = s1 * s2;
     EXPECT_FALSE(inter.IsMember(1));
     EXPECT_FALSE(inter.IsMember(2));
+}
+
+TEST(Set, differnt_universes) {
+    int size = randnumber(1, 100);
+    TSet s1(size+1), s2(size);
+    s1.InsElem(1);
+    s2.InsElem(1);
+    EXPECT_THROW(s1 + s2, std::invalid_argument);
+    EXPECT_THROW(s1 * s2, std::invalid_argument);
 }
 
 TEST(Set, SetComplement) {
