@@ -1,29 +1,36 @@
 #pragma once
 #include <string>
+#include <cctype>
+#include <stdexcept>
 #include <map>
+#include <cmath>
 #include "TStack.h"
 
+using std::string;
+using std::isdigit;
+using std::isalpha;
+using std::runtime_error;
+using std::to_string;
+
+bool IsHigherPrecedence(char op1, char op2);
+
+bool IsOperator(char c);
+
+enum Lexems {
+    NUMBER = 1,
+    OPERATOR
+};
+
 class TPostfix {
-private:
-    std::string infix;     // исходное выражение
-    std::string postfix;   // постфиксная форма
-
-    bool IsLetter(char c) const;
-    bool IsDigit(char c) const;
-    bool IsOperator(char c) const;
-    int  Priority(const std::string& op) const;
-
-    void CheckExpression() const;   // проверка корректности
-    void ToPostfixInternal();       // преобразование в постфикс
-
-    void AddToken(const std::string& tok); //добавление элементов в постфикс (операторы и операнды)
+    string infix;
+    string postfix;
 
 public:
-    TPostfix(const std::string& expr = "");
+    TPostfix(string infix_);
 
-    const std::string& GetInfix() const;
-    const std::string& GetPostfix() const;
+    const string& GetPostfix() const;
 
-    void ToPostfix();               // публичный вызов
-    double Calculate();             // вычисление постфиксного выражения
+    void ToPostfix();
+
+    double Evaluate(const std::map<char, double>& vars) const;
 };

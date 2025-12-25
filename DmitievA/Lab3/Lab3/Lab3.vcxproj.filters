@@ -18,9 +18,6 @@
     <ClCompile Include="Lab3.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="TStack.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="TPostfix.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
@@ -30,9 +27,6 @@
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
     <ClInclude Include="TPostfix.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="MyTPostfix.h">
       <Filter>Файлы заголовков</Filter>
     </ClInclude>
   </ItemGroup>

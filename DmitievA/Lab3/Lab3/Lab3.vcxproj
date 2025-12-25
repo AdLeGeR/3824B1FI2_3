@@ -129,10 +129,8 @@
   <ItemGroup>
     <ClCompile Include="Lab3.cpp" />
     <ClCompile Include="TPostfix.cpp" />
-    <ClCompile Include="TStack.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MyTPostfix.h" />
     <ClInclude Include="TPostfix.h" />
     <ClInclude Include="TStack.h" />
   </ItemGroup>
