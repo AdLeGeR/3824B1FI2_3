@@ -10,8 +10,6 @@ private:
 public:
 	TStack() : top_(-1) {};
 
-	TStack(const TStack& src) : data(src.data.begin(), src.data.end()), top_(src.top_) {};
-
 	size_t size() const {
 		return top_ + 1;
 	}
