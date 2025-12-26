@@ -1,29 +1,36 @@
 #pragma once
 #include <string>
-#include <cctype>
-#include <stdexcept>
 #include <map>
-#include <cmath>
+#include <iostream>
 #include "TStack.h"
 
 using std::string;
-using std::isdigit;
-using std::isalpha;
-using std::runtime_error;
-using std::to_string;
+using std::map;
+using std::istream;
+using std::ostream;
+using std::cin;
+using std::cout;
 
 bool IsHigherPrecedence(char op1, char op2);
 
 bool IsOperator(char c);
 
 enum Lexems {
+	NONE = 0,
     NUMBER = 1,
-    OPERATOR
+    OPERATOR,
+	VARIABLE,
+	OPBRACKET,
+	CLBRACKET,
 };
+
+string GetStrLexem(int lexem);
 
 class TPostfix {
     string infix;
     string postfix;
+    map<string, double> vars;
+	bool readVariables = false;
 
 public:
     TPostfix(string infix_);
@@ -32,5 +39,7 @@ public:
 
     void ToPostfix();
 
-    double Evaluate(const std::map<char, double>& vars) const;
+    double Evaluate();
+
+	void ReadVariables(istream& in=cin, ostream& out = cout);
 };

@@ -1,11 +1,15 @@
 #include "pch.h"
 #include <map>
 #include <stdexcept>
+#include <sstream>
 #include "../Lab3/TStack.h"
 #include "../Lab3/TPostfix.h"
 #include "../Lab3/TPostfix.cpp"
 using std::cout;
 using std::endl;
+using std::istringstream;
+using std::ostringstream;
+using std::exp;
 
 TEST(PostfixBuild, SimpleExpression) {
     TPostfix p("2+3");
@@ -34,42 +38,37 @@ TEST(PostfixBuild, Variables) {
 TEST(PostfixBuild, LnFunction) {
     TPostfix p("ln(a)+3");
     p.ToPostfix();
-    EXPECT_EQ(p.GetPostfix(), "a ln 3 + ");
+    EXPECT_EQ(p.GetPostfix(), "a ln() 3 + ");
 }
 
 TEST(PostfixEval, SimpleMath) {
     TPostfix p("2+3*4");
     p.ToPostfix();
-    std::map<char, double> vars;
-    EXPECT_DOUBLE_EQ(p.Evaluate(vars), 14.0);
+    EXPECT_DOUBLE_EQ(p.Evaluate(), 14.0);
 }
 
 TEST(PostfixEval, Variables) {
     TPostfix p("a+b");
     p.ToPostfix();
-    std::map<char, double> vars = { {'a', 2}, {'b', 5} };
-    EXPECT_DOUBLE_EQ(p.Evaluate(vars), 7.0);
+	istringstream in("2\n5\n");
+	ostringstream _;
+	p.ReadVariables(in, _);
+    EXPECT_DOUBLE_EQ(p.Evaluate(), 7.0);
 }
 
 TEST(PostfixEval, ParenthesesEval) {
     TPostfix p("(2+3)*4");
     p.ToPostfix();
-    std::map<char, double> vars;
-    EXPECT_DOUBLE_EQ(p.Evaluate(vars), 20.0);
+    EXPECT_DOUBLE_EQ(p.Evaluate(), 20.0);
 }
 
 TEST(PostfixEval, LnEval) {
     TPostfix p("ln(x)");
     p.ToPostfix();
-    std::map<char, double> vars = { {'x', std::exp(1.0)} };
-    EXPECT_NEAR(p.Evaluate(vars), 1.0, 1e-9);
-}
-
-TEST(PostfixErrors, UnknownVariable) {
-    TPostfix p("a+1");
-    p.ToPostfix();
-    std::map<char, double> vars; // a не определена
-    EXPECT_THROW(p.Evaluate(vars), std::runtime_error);
+    istringstream in(to_string(std::exp(1.0)));
+    ostringstream _;
+    p.ReadVariables(in, _);
+    EXPECT_NEAR(p.Evaluate(), 1.0, 1e-6);
 }
 
 TEST(PostfixErrors, MismatchedBrackets) {
