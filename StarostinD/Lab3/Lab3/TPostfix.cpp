@@ -175,7 +175,7 @@ void TPostfix::ToPostfix() {
 					if (pair.first == curr) {
 						item_priority = pair.second;
 					}
-					else if (pair.first == ops.top()) {
+					if (pair.first == ops.top()) {
 						stack_item_priority = pair.second;
 					}
 				}
