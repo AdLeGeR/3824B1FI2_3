@@ -33,7 +33,7 @@ class Postfix {
 	bool readVariables = false;
 
 public:
-    Postfix(string infix_);
+    Postfix(string infix_, bool parse = false);
 
     const string& GetPostfix() const;
 

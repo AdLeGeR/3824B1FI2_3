@@ -11,7 +11,7 @@
 using std::string;
 using std::isdigit;
 using std::isalpha;
-using std::runtime_error;
+using std::invalid_argument;
 using std::to_string;
 using std::map;
 using std::cin;
@@ -46,7 +46,7 @@ bool IsOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/';
 }
 
-Postfix::Postfix(string infix_) : infix(infix_) {}
+Postfix::Postfix(string infix_, bool parse) : infix(infix_) { if (parse) ToPostfix(); }
 
 const string& Postfix::GetPostfix() const { return postfix; }
 
@@ -68,11 +68,17 @@ void Postfix::ToPostfix() {
             // обработка цифр
             if (isdigit(infix[i])) {
                 if (last_lexem != OPERATOR && last_lexem!=OPBRACKET && last_lexem!=NONE) {
-                    throw runtime_error(GetStrLexem(last_lexem) + " before NUMBER at position " + to_string(i));
+                    throw invalid_argument(GetStrLexem(last_lexem) + " before NUMBER at position " + to_string(i));
                 }
                 current_lexem = infix[i++];
+                bool have_dot = false;
                 while (i < infix.size() &&
                     (isdigit(infix[i]) || infix[i] == '.')) {
+                    if (infix[i] == '.') {
+                        if (have_dot)
+                            throw invalid_argument("Double dot in number at position " + to_string(i));
+                        have_dot = true;
+                    }
                     current_lexem += infix[i++];
                 }
                 postfix += current_lexem + ' ';
@@ -91,7 +97,7 @@ void Postfix::ToPostfix() {
                     continue;
                 }
                 if (last_lexem != OPERATOR && last_lexem!= OPBRACKET && last_lexem!=NONE) {
-                    throw runtime_error(GetStrLexem(last_lexem) + " before VARIABLE at position " + to_string(i));
+                    throw invalid_argument(GetStrLexem(last_lexem) + " before VARIABLE at position " + to_string(i));
                 }
 
                 current_lexem.clear();
@@ -106,8 +112,8 @@ void Postfix::ToPostfix() {
 
             // открывающая скобка
             if (infix[i] == '(') {
-                if (last_lexem == VARIABLE || last_lexem == NUMBER)
-					throw runtime_error(GetStrLexem(last_lexem)+"before OPENING BRACKET at position " + to_string(i));
+                if (last_lexem == VARIABLE || last_lexem == NUMBER || last_lexem == CLBRACKET)
+					throw invalid_argument(GetStrLexem(last_lexem)+"before OPENING BRACKET at position " + to_string(i));
                 ops.Push('(');
 				last_lexem = OPBRACKET;
                 i++;
@@ -117,13 +123,13 @@ void Postfix::ToPostfix() {
             // закрывающая скобка
             if (infix[i] == ')') {
                 if (last_lexem == OPERATOR || last_lexem == NONE)
-                    throw runtime_error("OPERATOR before CLOSING BRACKET at position " + to_string(i));
+                    throw invalid_argument("OPERATOR before CLOSING BRACKET at position " + to_string(i));
                 while (!ops.IsEmpty() && ops.Top() != '(') {
                     postfix += ops.Pop();
                     postfix += ' ';
                 }
                 if (ops.IsEmpty())
-                    throw runtime_error("Inconsistent parentheses");
+                    throw invalid_argument("Inconsistent parentheses");
 
                 ops.Pop(); // убрать '('
 
@@ -139,7 +145,7 @@ void Postfix::ToPostfix() {
 
             //  оператор
             if (IsOperator(infix[i])) {
-                if (infix[i] == '-' && (last_lexem == OPERATOR || last_lexem == OPBRACKET || last_lexem == NONE)) {
+                if (infix[i] == '-' && (last_lexem == OPBRACKET || last_lexem == NONE)) {
                     char op = '~';                 // наш унарный минус
                     // правая ассоциативность: не выталкиваем оператор с тем же приоритетом
                     while (!ops.IsEmpty() && ops.Top() != '(' && IsHigherPrecedence(op, ops.Top())) {
@@ -152,7 +158,7 @@ void Postfix::ToPostfix() {
                     continue;
                 }
                 if (last_lexem==OPBRACKET || last_lexem == OPERATOR || last_lexem==NONE)
-                    throw runtime_error(GetStrLexem(last_lexem) + " before OPERATOR at position " + to_string(i));
+                    throw invalid_argument(GetStrLexem(last_lexem) + " before OPERATOR at position " + to_string(i));
                 while (!ops.IsEmpty() &&
                     ops.Top() != '(' &&
                     !IsHigherPrecedence(infix[i], ops.Top())) {
@@ -170,13 +176,15 @@ void Postfix::ToPostfix() {
                 continue;
             }
 
-            throw runtime_error("Unknown symbol: " + string(1, infix[i]));
+            throw invalid_argument("Unknown symbol: " + string(1, infix[i]));
         }
 
+        if (last_lexem == OPERATOR || last_lexem == OPBRACKET)
+            throw invalid_argument("The equation ends with " + GetStrLexem(last_lexem));
         // сбрасываем остаток операторов
         while (!ops.IsEmpty()) {
             if (ops.Top() == '(')
-                throw runtime_error("Inconsistent parentheses");
+                throw invalid_argument("Inconsistent parentheses");
             postfix += ops.Pop();
             postfix += ' ';
         }
@@ -214,7 +222,7 @@ double Postfix::Evaluate() {
                     token += postfix[i++];
 				}
                 if (token == "ln()") {
-                    if (st.IsEmpty()) throw runtime_error("Ln error");
+                    if (st.IsEmpty()) throw invalid_argument("Ln error");
                     double a = st.Pop();
                     st.Push(std::log(a));
                     continue;
@@ -222,7 +230,7 @@ double Postfix::Evaluate() {
                 char v = postfix[i++];
                 auto it = vars.find(token);
                 if (it == vars.end())
-                    throw runtime_error(string("The variable is not defined: ") + v);
+                    throw invalid_argument(string("The variable is not defined: ") + v);
                 st.Push(it->second);
                 continue;
             }
@@ -233,7 +241,7 @@ double Postfix::Evaluate() {
             char op = postfix[i++];
             if (op != '~') {
                 if (st.Size() < 2)
-                    throw runtime_error("Not enough operands");
+                    throw invalid_argument("Not enough operands");
 
                 double b = st.Pop();
                 double a = st.Pop();
@@ -243,12 +251,12 @@ double Postfix::Evaluate() {
                 case '-': st.Push(a - b); break;
                 case '*': st.Push(a * b); break;
                 case '/': st.Push(a / b); break;
-                default: throw runtime_error("Unknown operator");
+                default: throw invalid_argument("Unknown operator");
                 }
             }
             else {
                 if(st.Size() <1)
-                    throw runtime_error("Not enough operands");
+                    throw invalid_argument("Not enough operands");
                 double a = st.Pop();
                 st.Push(-a);
             }
@@ -256,7 +264,7 @@ double Postfix::Evaluate() {
         }
 
         if (st.Size() != 1)
-            throw runtime_error("Calculation error");
+            throw invalid_argument("Calculation error");
 
         return st.Pop();
     }

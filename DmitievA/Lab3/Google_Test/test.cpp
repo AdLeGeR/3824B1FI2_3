@@ -11,6 +11,7 @@ using std::endl;
 using std::istringstream;
 using std::ostringstream;
 using std::exp;
+using std::invalid_argument;
 
 
 TEST(PostfixBuild, SimpleExpression) {
@@ -123,17 +124,17 @@ TEST(PostfixEval, LnEval) {
 
 TEST(PostfixErrors, MismatchedBrackets) {
     Postfix p("(2+3");
-    EXPECT_THROW(p.ToPostfix(), std::runtime_error);
+    EXPECT_THROW(p.ToPostfix(), invalid_argument);
 }
 
 TEST(PostfixErrors, TwoOperatorsInRow) {
     Postfix p("2++3");
-    EXPECT_THROW(p.ToPostfix(), std::runtime_error);
+    EXPECT_THROW(p.ToPostfix(), invalid_argument);
 }
 
 TEST(PostfixErrors, InvalidSymbol) {
     Postfix p("2&3");
-    EXPECT_THROW(p.ToPostfix(), std::runtime_error);
+    EXPECT_THROW(p.ToPostfix(), invalid_argument);
 }
 
 TEST(Postfix, ComplexExpressionsWithUnaryMinusWithNumbersNoThrow)
@@ -166,4 +167,95 @@ TEST(Postfix, ComplexExpressionsWithUnaryMinusWithNumbersNoThrow)
     Postfix p7("-(a+3.5*ln(b-(-2.7)))/(c-(-(d/1.25)))+(-e*(f+0.4))");
     p7.ToPostfix();
     EXPECT_EQ(p7.GetPostfix(), "a 3.5 b 2.7 ~ - ln() * + ~ c d 1.25 / ~ - / e ~ f 0.4 + * + ");
+}
+
+TEST(Postfix, IncorrectExpressionsAnyThrow)
+{
+    //Incorrect infix form: incorrect number input.
+    EXPECT_THROW(Postfix p("ln2.3", true), invalid_argument);
+    EXPECT_THROW(Postfix p(")5.87", true), invalid_argument);
+    EXPECT_THROW(Postfix p("d1.3", true), invalid_argument);
+    EXPECT_THROW(Postfix p("dgf0.34", true), invalid_argument);
+    EXPECT_THROW(Postfix p("LO6.5", true), invalid_argument);
+    EXPECT_THROW(Postfix p("ln3", true), invalid_argument);
+
+    //Incorrect infix form: invalid number.
+    EXPECT_THROW(Postfix p("5.4.6", true), invalid_argument);
+
+    //Incorrect infix form: incorrect input of the operand (or the ln() function).
+    EXPECT_THROW(Postfix p(")a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("6.4B", true), invalid_argument);
+
+    //Incorrect infix form: a gap was found between the operands.
+    EXPECT_THROW(Postfix p("a b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("av Kj", true), invalid_argument);
+
+    //Incorrect infix form: incorrect entry of the opening bracket.
+    EXPECT_THROW(Postfix p("a+5.3(b+c)", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+d(b+c)", true), invalid_argument);
+    EXPECT_NO_THROW(Postfix p("a+ln(b+c)", true));
+    EXPECT_NO_THROW(Postfix p("a+(-(b+c))", true));
+    EXPECT_THROW(Postfix p("(a+f)(b+c)", true), invalid_argument);
+
+    //Incorrect infix form: incorrect entry of the closing bracket.
+    EXPECT_THROW(Postfix p(")", true), invalid_argument);
+    EXPECT_THROW(Postfix p("+)", true), invalid_argument);
+    EXPECT_THROW(Postfix p("-)", true), invalid_argument);
+    EXPECT_THROW(Postfix p("*)", true), invalid_argument);
+    EXPECT_THROW(Postfix p("/)", true), invalid_argument);
+    EXPECT_THROW(Postfix p("ln)", true), invalid_argument);
+
+    //Incorrect infix form: incorrect number of opening and closing brackets.
+    EXPECT_THROW(Postfix p("(a+b)-c)", true), invalid_argument);
+
+    //Incorrect infix form: incorrect unary minus sign input.
+    EXPECT_THROW(Postfix p("a+-b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a--b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a*-b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a/-b", true), invalid_argument);
+
+    EXPECT_THROW(Postfix p("a+(--b)", true), invalid_argument);
+
+    //Incorrect infix form: incorrect operation input.
+    EXPECT_THROW(Postfix p("+a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("*a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("/a", true), invalid_argument);
+
+    EXPECT_THROW(Postfix p("a++b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a-+b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a*+b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a/+b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+(+b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("-+a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("(-+a)", true), invalid_argument);
+
+    EXPECT_THROW(Postfix p("a+*b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a-*b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a**b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a/*b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+(*b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("-*a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("(-*a)", true), invalid_argument);
+
+    EXPECT_THROW(Postfix p("a+/b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a-/b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a*/b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a//b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+(/b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("-/a", true), invalid_argument);
+    EXPECT_THROW(Postfix p("(-/a)", true), invalid_argument);
+
+    //Incorrect infix form: unknown symbol detected.
+    EXPECT_THROW(Postfix p("a&b", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+b^c", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a$b", true), invalid_argument);
+
+    //Incorrect infix form: the infix form cannot end with ln, +, -, *, /, (. Or: incorrect number of opening and closing brackets.
+    EXPECT_THROW(Postfix p("a+", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a-", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a*", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a/", true), invalid_argument);
+    EXPECT_THROW(Postfix p("a+(", true), invalid_argument);
+
+    EXPECT_THROW(Postfix p("(a+b-(c*d)", true), invalid_argument);
 }
