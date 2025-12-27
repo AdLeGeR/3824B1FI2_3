@@ -26,14 +26,14 @@ enum Lexems {
 
 string GetStrLexem(int lexem);
 
-class TPostfix {
+class Postfix {
     string infix;
     string postfix;
     map<string, double> vars;
 	bool readVariables = false;
 
 public:
-    TPostfix(string infix_);
+    Postfix(string infix_);
 
     const string& GetPostfix() const;
 

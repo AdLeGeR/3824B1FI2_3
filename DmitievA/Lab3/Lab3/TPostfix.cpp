@@ -29,11 +29,16 @@ string GetStrLexem(int lexem) {
     }
 }
 
+int get_priority(char op) {
+    if (op == '~') return 3;   // unary minus
+    if (op == '+' || op == '-') return 1;
+    if (op == '*' || op == '/') return 2;
+    return 0;
+}
 
 bool IsHigherPrecedence(char op1, char op2) {
-    if ((op1 == '*' || op1 == '/') && (op2 == '+' || op2 == '-'))
-        return true;
-    return false;
+    
+    return get_priority(op1) > get_priority(op2);
 }
 
 
@@ -41,11 +46,11 @@ bool IsOperator(char c) {
     return c == '+' || c == '-' || c == '*' || c == '/';
 }
 
-TPostfix::TPostfix(string infix_) : infix(infix_) {}
+Postfix::Postfix(string infix_) : infix(infix_) {}
 
-const string& TPostfix::GetPostfix() const { return postfix; }
+const string& Postfix::GetPostfix() const { return postfix; }
 
-void TPostfix::ToPostfix() {
+void Postfix::ToPostfix() {
         postfix.clear();
         string current_lexem;
         TStack<char> ops(100);
@@ -134,6 +139,18 @@ void TPostfix::ToPostfix() {
 
             //  оператор
             if (IsOperator(infix[i])) {
+                if (infix[i] == '-' && (last_lexem == OPERATOR || last_lexem == OPBRACKET || last_lexem == NONE)) {
+                    char op = '~';                 // наш унарный минус
+                    // правая ассоциативность: не выталкиваем оператор с тем же приоритетом
+                    while (!ops.IsEmpty() && ops.Top() != '(' && IsHigherPrecedence(op, ops.Top())) {
+                        postfix += ops.Pop();
+                        postfix += ' ';
+                    }
+                    ops.Push(op);
+                    last_lexem = OPERATOR;
+                    i++;
+                    continue;
+                }
                 if (last_lexem==OPBRACKET || last_lexem == OPERATOR || last_lexem==NONE)
                     throw runtime_error(GetStrLexem(last_lexem) + " before OPERATOR at position " + to_string(i));
                 while (!ops.IsEmpty() &&
@@ -168,7 +185,7 @@ void TPostfix::ToPostfix() {
         }
     }
 
-double TPostfix::Evaluate() {
+double Postfix::Evaluate() {
         if (!readVariables)
 			ReadVariables();
         TStack<double> st(100);
@@ -214,19 +231,28 @@ double TPostfix::Evaluate() {
 
             // оператор
             char op = postfix[i++];
-            if (st.Size() < 2)
-                throw runtime_error("Not enough operands");
+            if (op != '~') {
+                if (st.Size() < 2)
+                    throw runtime_error("Not enough operands");
 
-            double b = st.Pop();
-            double a = st.Pop();
+                double b = st.Pop();
+                double a = st.Pop();
 
-            switch (op) {
-            case '+': st.Push(a + b); break;
-            case '-': st.Push(a - b); break;
-            case '*': st.Push(a * b); break;
-            case '/': st.Push(a / b); break;
-            default: throw runtime_error("Unknown operator");
+                switch (op) {
+                case '+': st.Push(a + b); break;
+                case '-': st.Push(a - b); break;
+                case '*': st.Push(a * b); break;
+                case '/': st.Push(a / b); break;
+                default: throw runtime_error("Unknown operator");
+                }
             }
+            else {
+                if(st.Size() <1)
+                    throw runtime_error("Not enough operands");
+                double a = st.Pop();
+                st.Push(-a);
+            }
+            
         }
 
         if (st.Size() != 1)
@@ -235,7 +261,7 @@ double TPostfix::Evaluate() {
         return st.Pop();
     }
 
-void TPostfix::ReadVariables(istream& in, ostream& out) {
+void Postfix::ReadVariables(istream& in, ostream& out) {
         for (auto& var : vars) {
             out << "Enter value for variable " << var.first << ": ";
             in >> var.second;
